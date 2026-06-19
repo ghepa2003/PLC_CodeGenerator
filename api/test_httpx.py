@@ -9,7 +9,7 @@ async def t():
             'HTTP-Referer': 'http://localhost:5173',
             'X-Title': 'PLC Code Generator'
         },
-        json={'model': 'openrouter/free', 'messages': [{'role':'user', 'content':'hello'}]}
+        json={'model': 'meta-llama/llama-3.3-70b-instruct:free', 'messages': [{'role':'user', 'content':'hello'}]}
     )
     print(res.status_code, res.text)
 

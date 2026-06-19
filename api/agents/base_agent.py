@@ -18,11 +18,12 @@ class BaseAgent:
         if not self.is_mock:
             self.client = AsyncOpenAI(
                 api_key=OPENROUTER_API_KEY,
-                base_url="https://openrouter.io/api/v1",
+                base_url="https://openrouter.ai/api/v1",
                 default_headers={
                     "HTTP-Referer": "https://github.com/ghepa2003/PLC_CodeGenerator",
                     "X-Title": "PLC Code Generator"
-                }
+                },
+                max_retries=0
             )
         else:
             logger.info(f"Agent {self.agent_id} started in MOCK mode because no valid OpenRouter API key was detected.")

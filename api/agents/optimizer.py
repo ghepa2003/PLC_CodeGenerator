@@ -43,8 +43,7 @@ class OptimizerAgent(BaseAgent):
                 response_str = response_str.split("```json")[1].split("```")[0].strip()
             elif "```" in response_str:
                 response_str = response_str.split("```")[1].split("```")[0].strip()
-                
-            return json.loads(response_str.strip())
+            return json.loads(response_str.strip(), strict=False)
         except Exception as e:
             logger.error(f"Error parsing JSON from Optimizer agent: {e}. Raw response: {response_str}")
             return {

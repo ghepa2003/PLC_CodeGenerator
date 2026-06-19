@@ -21,7 +21,20 @@ def generate_ladder_svg(rungs: List[Dict]) -> str:
     start_y = 60
     left_rail_x = 80
     right_rail_x = 820
+    # Expand rungs with multiple actions into multiple visual rungs
+    expanded_rungs = []
+    for r in rungs:
+        actions = r.get("actions", [])
+        if not actions:
+            expanded_rungs.append(r)
+        else:
+            for act in actions:
+                new_r = r.copy()
+                new_r["actions"] = [act]
+                expanded_rungs.append(new_r)
     
+    rungs = expanded_rungs
+
     total_height = start_y + (len(rungs) * rung_height) + 40
     
     # SVG Header
