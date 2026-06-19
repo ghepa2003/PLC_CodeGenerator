@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PLC Ladder Logic Generator</title>
+  <meta name="description" content="Converti il linguaggio naturale in codice Structured Text e Diagrammi Ladder per PLC in modo intelligente.">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-app: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-input: #f1f5f9;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --accent-primary: #4f46e5;      /* Indigo */
+      --accent-primary-hover: #4338ca;
+      --accent-primary-light: rgba(79, 70, 229, 0.08);
+      --accent-success: #10b981;      /* Emerald */
+      --accent-success-light: rgba(16, 185, 129, 0.08);
+      --accent-warning: #f59e0b;      /* Amber */
+      --accent-warning-light: rgba(245, 158, 11, 0.08);
+      --accent-danger: #ef4444;       /* Rose */
+      --accent-danger-light: rgba(239, 68, 68, 0.08);
+      --border-color: #e2e8f0;
+      --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'Fira Code', monospace;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-app);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Header */
+    header {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-color);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 10;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-success));
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: white;
+      font-size: 16px;
+    }
+
+    header h1 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .badge {
+      background: var(--accent-primary-light);
+      border: 1px solid rgba(79, 70, 229, 0.15);
+      color: var(--accent-primary);
+      padding: 4px 10px;
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    /* Main Layout */
+    .container {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+      height: calc(100vh - 57px);
+    }
+
+    /* Left Sidebar - Input */
+    .sidebar {
+      width: 380px;
+      min-width: 380px;
+      border-right: 1px solid var(--border-color);
+      background: var(--bg-card);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      overflow-y: auto;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-group label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 180px;
+      background-color: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-main);
+      padding: 12px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      line-height: 1.5;
+      resize: none;
+      transition: all 0.2s;
+      outline: none;
+    }
+
+    textarea:focus {
+      border-color: var(--accent-primary);
+      background-color: var(--bg-card);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+
+    .select-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    select {
+      background-color: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: var(--text-main);
+      padding: 8px 10px;
+      font-size: 13px;
+      outline: none;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    select:focus {
+      border-color: var(--accent-primary);
+      background-color: var(--bg-card);
+    }
+
+    .btn-submit {
+      background: linear-gradient(135deg, var(--accent-primary), #3b82f6);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 12px;
+      font-family: var(--font-sans);
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);
+    }
+
+    .btn-submit:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(79, 70, 229, 0.25);
+    }
+
+    .btn-submit:active {
+      transform: translateY(1px);
+    }
+
+    .btn-submit:disabled {
+      background: #cbd5e1;
+      color: #94a3b8;
+      box-shadow: none;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Spinner loader */
+    .spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 0.8s linear infinite;
+      display: none;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .instructions-card {
+      background: var(--accent-primary-light);
+      border: 1px solid rgba(79, 70, 229, 0.12);
+      border-radius: 8px;
+      padding: 14px;
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .instructions-card h4 {
+      color: var(--text-main);
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .instructions-card ul {
+      list-style-type: none;
+      padding-left: 0;
+    }
+
+    .instructions-card li {
+      margin-bottom: 4px;
+    }
+
+    /* Right Section - Output Display */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-app);
+      overflow: hidden;
+    }
+
+    /* Tabs Header */
+    .tabs-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-color);
+      padding: 0 24px;
+      background: var(--bg-card);
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      padding: 16px 20px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      position: relative;
+      transition: color 0.2s;
+      border-bottom: 2px solid transparent;
+      outline: none;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-main);
+    }
+
+    .tab-btn.active {
+      color: var(--accent-primary);
+      font-weight: 600;
+      border-bottom-color: var(--accent-primary);
+    }
+
+    .action-bar {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-action {
+      background: white;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .btn-action:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+
+    .btn-xml {
+      background: var(--accent-success-light);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      color: #065f46;
+      font-weight: 600;
+    }
+
+    .btn-xml:hover {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+
+    /* Output Panels */
+    .tab-content {
+      flex: 1;
+      padding: 24px;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .panel {
+      display: none;
+      height: 100%;
+      width: 100%;
+    }
+
+    .panel.active {
+      display: block;
+    }
+
+    /* Graphic Ladder Panel */
+    #ladder-panel {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 24px;
+      min-height: 350px;
+      overflow: auto;
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* SVG responsive styling */
+    #ladder-svg-container {
+      width: 100%;
+      height: auto;
+      max-width: 900px;
+      display: flex;
+      justify-content: center;
+    }
+
+    /* Code Panel */
+    #code-panel {
+      background: #1e293b;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      min-height: 350px;
+    }
+
+    pre {
+      margin: 0;
+      padding: 20px;
+      overflow: auto;
+      height: 100%;
+    }
+
+    code {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: #38bdf8;
+      line-height: 1.6;
+    }
+
+    /* Metadata/Status bar at the bottom */
+    .status-bar {
+      border-top: 1px solid var(--border-color);
+      padding: 12px 24px;
+      background: var(--bg-card);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .metadata-items {
+      display: flex;
+      gap: 20px;
+    }
+
+    .metadata-item span {
+      color: var(--text-main);
+      font-weight: 600;
+    }
+
+    /* Error and Warning banners */
+    .alerts-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .alert-banner {
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 13px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      line-height: 1.5;
+    }
+
+    .alert-banner.warning {
+      background: var(--accent-warning-light);
+      border: 1px solid rgba(245, 158, 11, 0.2);
+      color: #92400e;
+    }
+
+    .alert-banner.error {
+      background: var(--accent-danger-light);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      color: #991b1b;
+    }
+
+    .alert-icon {
+      font-size: 16px;
+    }
+
+    .alert-body {
+      flex: 1;
+    }
+
+    .alert-suggestions {
+      margin-top: 6px;
+      font-size: 11px;
+      opacity: 0.9;
+      padding-left: 20px;
+    }
+
+    /* Empty state */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      height: 100%;
+      min-height: 350px;
+      gap: 8px;
+      text-align: center;
+    }
+
+    .empty-state-icon {
+      font-size: 32px;
+      opacity: 0.4;
+      margin-bottom: 8px;
+    }
+    
+    /* Custom scrollbars inside pages */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 99px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="logo-container">
+      <div class="logo-icon">L</div>
+      <div>
+        <h1>PLC Ladder Logic Generator</h1>
+      </div>
+    </div>
+    <span class="badge">DOE Architecture 3.0</span>
+  </header>
+
+  <!-- Container -->
+  <div class="container">
+    
+    <!-- Left: Input Form -->
+    <div class="sidebar">
+      <div class="form-group">
+        <label for="input-nl">Specifiche Logica (Linguaggio Naturale)</label>
+        <textarea id="input-nl" placeholder="Esempio:
+Se pulsante START premuto E sensore_livello > 80, attiva valvola_scarico.
+Se valvola_scarico attiva per 5 secondi, accendi segnale_allarme."></textarea>
+      </div>
+
+      <div class="select-grid">
+        <div class="form-group">
+          <label for="plc-type">Marca PLC</label>
+          <select id="plc-type">
+            <option value="siemens">Siemens (TIA)</option>
+            <option value="allen_bradley" selected>Allen Bradley</option>
+            <option value="beckhoff">Beckhoff (TC3)</option>
+            <option value="mitsubishi">Mitsubishi</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="safety-level">Sicurezza</label>
+          <select id="safety-level">
+            <option value="low">Bassa</option>
+            <option value="medium" selected>Media</option>
+            <option value="high">Alta</option>
+          </select>
+        </div>
+      </div>
+
+      <button id="btn-generate" class="btn-submit" onclick="generateLadder()">
+        <span class="spinner" id="btn-spinner"></span>
+        <span id="btn-text">Genera Diagramma</span>
+      </button>
+
+      <div class="instructions-card">
+        <h4>💡 Suggerimenti</h4>
+        <ul>
+          <li>• Usa verbi d'azione come "attiva", "avvia", "spegni".</li>
+          <li>• Specifica timer con "per X secondi" o "dopo X sec".</li>
+          <li>• Per sensori analogici indica soglie numeriche (es. &gt; 80).</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Right: Output Visualization -->
+    <div class="main-content">
+      
+      <!-- Tabs Header -->
+      <div class="tabs-header">
+        <div class="tabs">
+          <button class="tab-btn active" id="tab-btn-ladder" onclick="switchTab('ladder')">Diagramma Ladder</button>
+          <button class="tab-btn" id="tab-btn-code" onclick="switchTab('code')">Codice Structured Text (ST)</button>
+        </div>
+        <div class="action-bar" id="action-bar" style="display: none;">
+          <button class="btn-action" id="btn-copy-st" onclick="copyCode()" style="display: none;">
+            Copia ST
+          </button>
+          <button class="btn-action" onclick="downloadST()">
+            Scarica .ST
+          </button>
+          <button class="btn-action btn-xml" id="btn-download-xml" onclick="downloadXML()">
+            Scarica XML CODESYS
+          </button>
+        </div>
+      </div>
+
+      <!-- Tab Contents -->
+      <div class="tab-content">
+        
+        <!-- Alerts container for logic errors and warnings -->
+        <div id="alerts" class="alerts-container"></div>
+
+        <!-- Ladder Visual Panel -->
+        <div id="ladder-panel" class="panel active">
+          <div class="empty-state" id="ladder-empty">
+            <div class="empty-state-icon">📊</div>
+            <p>Il diagramma Ladder a contatti verrà renderizzato qui.</p>
+          </div>
+          <div id="ladder-svg-container"></div>
+        </div>
+
+        <!-- Code Panel -->
+        <div id="code-panel" class="panel">
+          <div class="empty-state" id="code-empty">
+            <div class="empty-state-icon">💻</div>
+            <p>Il codice Structured Text (ST) verrà mostrato qui.</p>
+          </div>
+          <pre id="code-pre" style="display: none;"><code id="code-block" class="language-pascal"></code></pre>
+        </div>
+
+      </div>
+
+      <!-- Footer / Status Bar -->
+      <div class="status-bar" id="status-bar" style="display: none;">
+        <div class="metadata-items">
+          <div class="metadata-item">Rung totali: <span id="meta-rungs">-</span></div>
+          <div class="metadata-item">Contatti: <span id="meta-contacts">-</span></div>
+          <div class="metadata-item">Bobine: <span id="meta-coils">-</span></div>
+          <div class="metadata-item">Complessità: <span id="meta-complexity">-</span></div>
+          <div class="metadata-item">Tempo: <span id="meta-time">-</span></div>
+        </div>
+        <div id="meta-model">Motore AI: -</div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    let generatedCode = "";
+    let generatedXml = "";
+    let currentTab = "ladder";
+
+    function switchTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(panel => panel.classList.remove('active'));
+
+      if (tab === 'ladder') {
+        document.getElementById('tab-btn-ladder').classList.add('active');
+        document.getElementById('ladder-panel').classList.add('active');
+        document.getElementById('btn-copy-st').style.display = 'none';
+      } else {
+        document.getElementById('tab-btn-code').classList.add('active');
+        document.getElementById('code-panel').classList.add('active');
+        if (generatedCode) {
+          document.getElementById('btn-copy-st').style.display = 'block';
+        }
+      }
+    }
+
+    async function generateLadder() {
+      const inputNL = document.getElementById('input-nl').value.trim();
+      const plcType = document.getElementById('plc-type').value;
+      const safetyLevel = document.getElementById('safety-level').value;
+
+      if (!inputNL) {
+        alert("Per favore, inserisci delle specifiche in linguaggio naturale.");
+        return;
+      }
+
+      // Set Loading States
+      const btn = document.getElementById('btn-generate');
+      const spinner = document.getElementById('btn-spinner');
+      const btnText = document.getElementById('btn-text');
+      
+      btn.disabled = true;
+      spinner.style.display = 'inline-block';
+      btnText.innerText = "Elaborazione in corso...";
+
+      // Clear alerts and output
+      const alertsDiv = document.getElementById('alerts');
+      alertsDiv.innerHTML = "";
+      document.getElementById('ladder-svg-container').innerHTML = "";
+      document.getElementById('code-block').innerText = "";
+
+      try {
+        const response = await fetch('/api/generate-ladder', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            input_nl: inputNL,
+            plc_type: plcType,
+            safety_level: safetyLevel
+          })
+        });
+
+        const result = await response.json();
+
+        // Handle Warnings
+        if (result.warnings && result.warnings.length > 0) {
+          result.warnings.forEach(warn => {
+            addAlert('warning', warn.code, warn.message, warn.suggestions);
+          });
+        }
+
+        // Handle Errors / Clarifications
+        if (!result.success) {
+          if (result.errors && result.errors.length > 0) {
+            result.errors.forEach(err => {
+              addAlert('error', err.code, err.message, err.suggestions);
+            });
+          }
+          if (result.clarifying_questions && result.clarifying_questions.length > 0) {
+            result.clarifying_questions.forEach(q => {
+              addAlert('warning', 'AMBIGUITA_LOGICA', `Clarification needed: ${q}`, []);
+            });
+          }
+
+          // Show empty state
+          document.getElementById('ladder-empty').style.display = 'flex';
+          document.getElementById('code-empty').style.display = 'flex';
+          document.getElementById('code-pre').style.display = 'none';
+          document.getElementById('status-bar').style.display = 'none';
+          document.getElementById('action-bar').style.display = 'none';
+        } else {
+          // Success Path
+          // Render SVG
+          document.getElementById('ladder-empty').style.display = 'none';
+          document.getElementById('ladder-svg-container').innerHTML = result.visualization;
+
+          // Render Code
+          document.getElementById('code-empty').style.display = 'none';
+          document.getElementById('code-pre').style.display = 'block';
+          document.getElementById('code-block').innerText = result.ladder_code;
+          generatedCode = result.ladder_code;
+          generatedXml = result.xml_codesys || "";
+
+          // Render Metadata
+          document.getElementById('meta-rungs').innerText = result.metadata.total_rungs;
+          document.getElementById('meta-contacts').innerText = result.metadata.total_contacts;
+          document.getElementById('meta-coils').innerText = result.metadata.total_coils;
+          document.getElementById('meta-complexity').innerText = (result.metadata.complexity_score * 100).toFixed(0) + "%";
+          document.getElementById('meta-time').innerText = result.metadata.execution_time_ms + "ms";
+          document.getElementById('meta-model').innerText = result.metadata.model_used;
+
+          document.getElementById('status-bar').style.display = 'flex';
+          document.getElementById('action-bar').style.display = 'flex';
+          
+          if (generatedXml) {
+            document.getElementById('btn-download-xml').style.display = 'block';
+          } else {
+            document.getElementById('btn-download-xml').style.display = 'none';
+          }
+
+          // Switch to active tab
+          switchTab(currentTab);
+        }
+
+      } catch (err) {
+        console.error(err);
+        addAlert('error', 'SERVER_ERROR', "Impossibile comunicare con il server locale del backend. Assicurati che FastAPI sia in esecuzione.", []);
+      } finally {
+        btn.disabled = false;
+        spinner.style.display = 'none';
+        btnText.innerText = "Genera Diagramma";
+      }
+    }
+
+    function addAlert(type, code, message, suggestions) {
+      const alertsDiv = document.getElementById('alerts');
+      const banner = document.createElement('div');
+      banner.className = `alert-banner ${type}`;
+      
+      const icon = type === 'error' ? '❌' : '⚠️';
+      
+      let suggestionsHtml = "";
+      if (suggestions && suggestions.length > 0) {
+        suggestionsHtml = `<ul class="alert-suggestions">${suggestions.map(s => `<li>• ${s}</li>`).join('')}</ul>`;
+      }
+
+      banner.innerHTML = `
+        <div class="alert-icon">${icon}</div>
+        <div class="alert-body">
+          <strong>[${code}]</strong> ${message}
+          ${suggestionsHtml}
+        </div>
+      `;
+      alertsDiv.appendChild(banner);
+    }
+
+    function copyCode() {
+      if (!generatedCode) return;
+      navigator.clipboard.writeText(generatedCode);
+      alert("Codice Structured Text copiato negli appunti!");
+    }
+
+    function downloadST() {
+      if (!generatedCode) return;
+      const element = document.createElement("a");
+      const file = new Blob([generatedCode], {type: 'text/plain'});
+      element.href = URL.createObjectURL(file);
+      element.download = "plc_program.st";
+      document.body.appendChild(element);
+      element.click();
+      document.body.removeChild(element);
+    }
+
+    function downloadXML() {
+      if (!generatedXml) return;
+      const element = document.createElement("a");
+      const file = new Blob([generatedXml], {type: 'text/xml'});
+      element.href = URL.createObjectURL(file);
+      element.download = "codesys_import.xml";
+      document.body.appendChild(element);
+      element.click();
+      document.body.removeChild(element);
+    }
+  </script>
+</body>
+</html>
