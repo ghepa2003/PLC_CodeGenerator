@@ -26,6 +26,40 @@ class GenerateRequest(BaseModel):
     plc_type: str = "allen_bradley"
     safety_level: str = "medium"
 
+from agents.base_agent import BaseAgent
+
+@app.get("/api/debug")
+async def debug_endpoint():
+    import os
+    key = os.getenv("OPENROUTER_API_KEY", "")
+    masked_key = f"{key[:8]}...{key[-4:]}" if len(key) > 12 else "INVALID_OR_MISSING"
+    
+    agent = BaseAgent("test", "openrouter/free")
+    
+    test_result = "Not Tested"
+    error_msg = None
+    
+    if not agent.is_mock:
+        try:
+            response = await agent.client.chat.completions.create(
+                model="openrouter/free",
+                messages=[{"role": "user", "content": "Say 'hello'"}],
+                temperature=0.2
+            )
+            test_result = response.choices[0].message.content
+        except Exception as e:
+            test_result = "ERROR"
+            error_msg = str(e)
+            import traceback
+            error_msg += " " + traceback.format_exc()
+
+    return {
+        "is_mock_mode": agent.is_mock,
+        "key_preview": masked_key,
+        "test_call_result": test_result,
+        "error_details": error_msg
+    }
+
 @app.post("/api/generate-ladder")
 async def generate_ladder_endpoint(req: GenerateRequest):
     try:
