@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface Metadata {
   total_rungs: number;
@@ -36,6 +36,30 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<'ladder' | 'code'>('ladder');
   const [result, setResult] = useState<GenerateResult | null>(null);
   const [alertList, setAlertList] = useState<{ type: 'warning' | 'error'; code: string; message: string; suggestions?: string[] }[]>([]);
+  const [aiStatus, setAiStatus] = useState<'checking' | 'connected' | 'error' | 'mock'>('checking');
+  const [aiErrorMsg, setAiErrorMsg] = useState<string>('');
+
+  useEffect(() => {
+    const checkStatus = async () => {
+      try {
+        const res = await fetch('/api/debug');
+        const data = await res.json();
+        if (data.is_mock_mode) {
+           setAiStatus('mock');
+           setAiErrorMsg('Nessuna chiave API inserita o chiave MOCK rilevata.');
+        } else if (data.test_call_result === "ERROR") {
+           setAiStatus('error');
+           setAiErrorMsg(data.error_details || 'Errore di connessione API');
+        } else {
+           setAiStatus('connected');
+        }
+      } catch (e) {
+        setAiStatus('error');
+        setAiErrorMsg('Impossibile contattare il backend locale');
+      }
+    };
+    checkStatus();
+  }, []);
 
   const handleGenerate = async () => {
     if (!inputNL.trim()) {
@@ -173,16 +197,26 @@ export default function App() {
           }}>L</div>
           <h1 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text-main)' }}>PLC Ladder Logic Generator</h1>
         </div>
-        <span style={{
-          backgroundColor: 'var(--accent-primary-light)',
-          border: '1px solid rgba(79, 70, 229, 0.15)',
-          color: 'var(--accent-primary)',
-          padding: '4px 10px',
-          borderRadius: '99px',
-          fontSize: '11px',
-          fontWeight: 600,
-          letterSpacing: '0.5px'
-        }}>Vite + React Dashboard</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          {/* AI Status Indicator */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 500, padding: '4px 10px', borderRadius: '20px', backgroundColor: 'var(--bg-app)', border: '1px solid var(--border-color)' }}>
+            {aiStatus === 'checking' && <span style={{ color: '#6b7280' }}>Verifica connessione AI...</span>}
+            {aiStatus === 'connected' && <><div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10b981' }}></div><span style={{ color: '#059669' }}>AI Connessa</span></>}
+            {aiStatus === 'mock' && <><div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#f59e0b' }}></div><span style={{ color: '#d97706' }} title={aiErrorMsg}>Modalità MOCK (Locale)</span></>}
+            {aiStatus === 'error' && <><div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#ef4444' }}></div><span style={{ color: '#dc2626' }} title={aiErrorMsg}>Errore AI: Passa il mouse qui</span></>}
+          </div>
+
+          <span style={{
+            backgroundColor: 'var(--accent-primary-light)',
+            border: '1px solid rgba(79, 70, 229, 0.15)',
+            color: 'var(--accent-primary)',
+            padding: '4px 10px',
+            borderRadius: '99px',
+            fontSize: '11px',
+            fontWeight: 600,
+            letterSpacing: '0.5px'
+          }}>Vite + React Dashboard</span>
+        </div>
       </header>
 
       {/* Main Layout */}
