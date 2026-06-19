@@ -18,7 +18,11 @@ class BaseAgent:
         if not self.is_mock:
             self.client = AsyncOpenAI(
                 api_key=OPENROUTER_API_KEY,
-                base_url="https://openrouter.io/api/v1"
+                base_url="https://openrouter.io/api/v1",
+                default_headers={
+                    "HTTP-Referer": "https://github.com/ghepa2003/PLC_CodeGenerator",
+                    "X-Title": "PLC Code Generator"
+                }
             )
         else:
             logger.info(f"Agent {self.agent_id} started in MOCK mode because no valid OpenRouter API key was detected.")
@@ -35,20 +39,24 @@ class BaseAgent:
             return self._mock_call(user_prompt)
 
         try:
-            extra_body = {}
-            if response_format == "json":
-                extra_body = {"response_format": {"type": "json_object"}}
-                
             response = await self.client.chat.completions.create(
                 model=self.default_model,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
                 ],
-                temperature=0.2,
-                extra_body=extra_body
+                temperature=0.2
             )
-            return response.choices[0].message.content
+            
+            content = response.choices[0].message.content
+            
+            # Clean up potential markdown formatting from models
+            if content.startswith("```json"):
+                content = content[7:-3].strip()
+            elif content.startswith("```"):
+                content = content[3:-3].strip()
+                
+            return content
         except Exception as e:
             logger.error(f"Error calling OpenRouter for agent {self.agent_id}: {str(e)}")
             # Fallback to mock logic if the API call fails
